@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: .NET CI Pipeline
 
 on:
   push:
@@ -8,20 +8,22 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-    - name: Set up Java
-      uses: actions/setup-java@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
       with:
-        java-version: '17'
+        dotnet-version: '8.0.x'
 
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
+    - name: Restore dependencies
+      run: dotnet restore
 
-    - name: Run Unit Tests
-      run: mvn test
+    - name: Build project
+      run: dotnet build --configuration Release --no-restore
 
+    - name: Run unit tests
+      run: dotnet test --no-build --verbosity normal
