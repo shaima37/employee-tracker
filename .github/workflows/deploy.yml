@@ -1,1 +1,19 @@
 
+name: CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Deploy to Cloud
+      run: |
+        echo "Deploying to AWS Elastic Beanstalk..."
+        aws elasticbeanstalk update-environment --application-name "EmployeeTracker" --environment-name "ProductionEnv"
