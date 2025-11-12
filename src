@@ -1,1 +1,277 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace EmployeeTracker
+{
+    enum UserRole { Admin, Manager, Employee }
+    enum TaskStatus { Pending, InProgress, Completed }
+
+    class User
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public UserRole Role { get; set; }
+
+        public User(int id, string name, UserRole role)
+        {
+            Id = id;
+            Name = name;
+            Role = role;
+        }
+    }
+
+    class TaskItem
+    {
+        public int Id { get; set; }
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public int? AssigneeId { get; set; }
+        public TaskStatus Status { get; set; }
+
+        public TaskItem()
+        {
+            Status = TaskStatus.Pending;
+        }
+
+        public override string ToString()
+        {
+            return "[Task #" + Id + "] " + Title + " - " + Description + " - Status: " + Status;
+        }
+    }
+
+    class PerformanceEvaluation
+    {
+        public int Id { get; set; }
+        public int TargetUserId { get; set; }
+        public int EvaluatorId { get; set; }
+        public int Rating { get; set; } // 1 to 5
+        public string Comments { get; set; }
+        public DateTime Date { get; set; }
+
+        public PerformanceEvaluation()
+        {
+            Date = DateTime.Now;
+        }
+
+        public override string ToString()
+        {
+            return "Eval #" + Id + " for User " + TargetUserId +
+                   ": Rating=" + Rating + ", Comment=" + Comments;
+        }
+    }
+
+    class Program
+    {
+        static List<User> users = new List<User>();
+        static List<TaskItem> tasks = new List<TaskItem>();
+        static List<PerformanceEvaluation> evaluations = new List<PerformanceEvaluation>();
+
+        static void Main()
+        {
+            SeedData();
+
+            int choice = -1;
+            while (choice != 0)
+            {
+                Console.WriteLine("\n==== Employee Tracker Console ====");
+                Console.WriteLine("1. List Users");
+                Console.WriteLine("2. Create Task");
+                Console.WriteLine("3. Assign Task");
+                Console.WriteLine("4. Update Task Status");
+                Console.WriteLine("5. List All Tasks");
+                Console.WriteLine("6. Add Performance Evaluation");
+                Console.WriteLine("7. View Evaluations");
+                Console.WriteLine("0. Exit");
+                Console.Write("Enter choice: ");
+
+                int c;
+                if (int.TryParse(Console.ReadLine(), out c))
+                    choice = c;
+                else
+                    choice = -1;
+
+                switch (choice)
+                {
+                    case 1: ListUsers(); break;
+                    case 2: CreateTask(); break;
+                    case 3: AssignTask(); break;
+                    case 4: UpdateTaskStatus(); break;
+                    case 5: ListTasks(); break;
+                    case 6: AddEvaluation(); break;
+                    case 7: ListEvaluations(); break;
+                    case 0: Console.WriteLine("Exiting..."); break;
+                    default: Console.WriteLine("Invalid choice!"); break;
+                }
+            }
+        }
+
+        static void SeedData()
+        {
+            users.Add(new User(1, "Admin", UserRole.Admin));
+            users.Add(new User(2, "Manager", UserRole.Manager));
+            users.Add(new User(3, "Employee", UserRole.Employee));
+
+            tasks.Add(new TaskItem { Id = 1, Title = "Initial Task", Description = "System Setup", AssigneeId = 3 });
+        }
+
+        static void ListUsers()
+        {
+            Console.WriteLine("\n--- Users ---");
+            foreach (User u in users)
+                Console.WriteLine(u.Id + ". " + u.Name + " (" + u.Role + ")");
+        }
+
+        static void CreateTask()
+        {
+            Console.Write("\nEnter task title: ");
+            string title = Console.ReadLine();
+            Console.Write("Enter description: ");
+            string desc = Console.ReadLine();
+
+            int id = tasks.Count + 1;
+            tasks.Add(new TaskItem { Id = id, Title = title, Description = desc });
+            Console.WriteLine("Task '" + title + "' created with ID " + id + ".");
+        }
+
+        static void AssignTask()
+        {
+            Console.Write("\nEnter Task ID to assign: ");
+            int tid;
+            if (!int.TryParse(Console.ReadLine(), out tid))
+            {
+                Console.WriteLine("Invalid Task ID!");
+                return;
+            }
+
+            Console.Write("Enter Employee ID: ");
+            int eid;
+            if (!int.TryParse(Console.ReadLine(), out eid))
+            {
+                Console.WriteLine("Invalid Employee ID!");
+                return;
+            }
+
+            TaskItem task = tasks.FirstOrDefault(t => t.Id == tid);
+            User emp = users.FirstOrDefault(u => u.Id == eid && u.Role == UserRole.Employee);
+
+            if (task == null || emp == null)
+            {
+                Console.WriteLine("Invalid Task or Employee ID!");
+                return;
+            }
+
+            task.AssigneeId = emp.Id;
+            Console.WriteLine("Task " + tid + " assigned to " + emp.Name + ".");
+        }
+
+        static void UpdateTaskStatus()
+        {
+            Console.Write("\nEnter Task ID: ");
+            int tid;
+            if (!int.TryParse(Console.ReadLine(), out tid))
+            {
+                Console.WriteLine("Invalid Task ID!");
+                return;
+            }
+
+            TaskItem task = tasks.FirstOrDefault(t => t.Id == tid);
+            if (task == null)
+            {
+                Console.WriteLine("Task not found!");
+                return;
+            }
+
+            Console.WriteLine("1. Pending  2. InProgress  3. Completed");
+            Console.Write("Select new status: ");
+            int status;
+            if (!int.TryParse(Console.ReadLine(), out status) || status < 1 || status > 3)
+            {
+                Console.WriteLine("Invalid status choice!");
+                return;
+            }
+
+            task.Status = (TaskStatus)(status - 1);
+            Console.WriteLine("Task " + tid + " status updated to " + task.Status + ".");
+        }
+
+        static void ListTasks()
+        {
+            Console.WriteLine("\n--- Tasks ---");
+            foreach (TaskItem t in tasks)
+            {
+                string assignee = "Unassigned";
+                User u = users.FirstOrDefault(x => x.Id == t.AssigneeId);
+                if (u != null)
+                    assignee = u.Name;
+
+                Console.WriteLine("#" + t.Id + ": " + t.Title + " | " + t.Description +
+                                  " | Assigned to: " + assignee + " | Status: " + t.Status);
+            }
+        }
+
+        static void AddEvaluation()
+        {
+            Console.Write("\nEnter Evaluator ID (Manager/Admin): ");
+            int evalId;
+            if (!int.TryParse(Console.ReadLine(), out evalId))
+            {
+                Console.WriteLine("Invalid ID!");
+                return;
+            }
+
+            Console.Write("Enter Target Employee ID: ");
+            int targetId;
+            if (!int.TryParse(Console.ReadLine(), out targetId))
+            {
+                Console.WriteLine("Invalid ID!");
+                return;
+            }
+
+            Console.Write("Enter Rating (1-5): ");
+            int rating;
+            if (!int.TryParse(Console.ReadLine(), out rating) || rating < 1 || rating > 5)
+            {
+                Console.WriteLine("Invalid rating. Please enter between 1 and 5.");
+                return;
+            }
+
+            Console.Write("Enter Comments: ");
+            string comments = Console.ReadLine();
+
+            User evaluator = users.FirstOrDefault(u => u.Id == evalId &&
+                (u.Role == UserRole.Manager || u.Role == UserRole.Admin));
+            User target = users.FirstOrDefault(u => u.Id == targetId);
+
+            if (evaluator == null || target == null)
+            {
+                Console.WriteLine("Invalid evaluator or employee!");
+                return;
+            }
+
+            PerformanceEvaluation eval = new PerformanceEvaluation();
+            eval.Id = evaluations.Count + 1;
+            eval.EvaluatorId = evaluator.Id;
+            eval.TargetUserId = target.Id;
+            eval.Rating = rating;
+            eval.Comments = comments;
+
+            evaluations.Add(eval);
+            Console.WriteLine("Evaluation added successfully.");
+        }
+
+        static void ListEvaluations()
+        {
+            Console.WriteLine("\n--- Performance Evaluations ---");
+            foreach (PerformanceEvaluation e in evaluations)
+            {
+                User target = users.FirstOrDefault(u => u.Id == e.TargetUserId);
+                User evaluator = users.FirstOrDefault(u => u.Id == e.EvaluatorId);
+                Console.WriteLine("#" + e.Id + ": " + target.Name + " rated " +
+                                  e.Rating + "/5 by " + evaluator.Name +
+                                  " (" + e.Comments + ")");
+            }
+        }
+    }
+}
 
