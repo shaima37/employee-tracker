@@ -1,0 +1,68 @@
+// Integration Test
+using System;
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using EmployeeTracker;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace EmployeeTrackerTests
+{
+    [TestClass]
+    public class IntegrationTests
+    {
+        [TestMethod]
+        public void EndToEnd_Assign_Complete_Evaluate_Flow()
+        {
+            // ======== SETUP PHASE ========
+            List<User> users = new List<User>
+            {
+                new User(1, "Admin", UserRole.Admin),
+                new User(2, "Manager", UserRole.Manager),
+                new User(3, "Employee", UserRole.Employee)
+            };
+
+            List<TaskItem> tasks = new List<TaskItem>
+            {
+                new TaskItem { Id = 1, Title = "Database Update", Description = "Update HR records" }
+            };
+
+            List<PerformanceEvaluation> evaluations = new List<PerformanceEvaluation>();
+
+            // ======== STEP 1: ASSIGN TASK ========
+            TaskItem task = tasks.FirstOrDefault(t => t.Id == 1);
+            User emp = users.FirstOrDefault(u => u.Role == UserRole.Employee);
+
+            task.AssigneeId = emp.Id;
+
+            // Verify assignment
+            Assert.AreEqual(emp.Id, task.AssigneeId, "Task should be assigned to the correct employee.");
+
+            // ======== STEP 2: UPDATE STATUS ========
+            task.Status = TaskStatus.Completed;
+
+            // Verify status change
+            Assert.AreEqual(TaskStatus.Completed, task.Status, "Task should be marked as completed.");
+
+            // ======== STEP 3: EVALUATE PERFORMANCE ========
+            User manager = users.FirstOrDefault(u => u.Role == UserRole.Manager);
+
+            PerformanceEvaluation eval = new PerformanceEvaluation
+            {
+                Id = 1,
+                EvaluatorId = manager.Id,
+                TargetUserId = emp.Id,
+                Rating = 5,
+                Comments = "Excellent work completing the task early!"
+            };
+
+            evaluations.Add(eval);
+
+            // ======== VERIFY END-TO-END ========
+            Assert.AreEqual(1, evaluations.Count, "Evaluation should be recorded.");
+            Assert.AreEqual(emp.Id, evaluations[0].TargetUserId, "Evaluation must belong to the assigned employee.");
+            Assert.AreEqual("Excellent work completing the task early!", evaluations[0].Comments, "Comments should match.");
+
+            Console.WriteLine("✅ End-to-end flow executed successfully.");
+        }
+    }
+}
