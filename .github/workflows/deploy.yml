@@ -1,29 +1,47 @@
-name: .NET CD Pipeline
+name: CD - Deploy Application
 
 on:
-  push:
-    branches: [ main ]
+  workflow_run:
+    workflows: ["CI - Build and Test"]
+    types:
+      - completed
 
 jobs:
   deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: windows-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    # 1 Download source again (or artifact from CI)
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+    # 2 Setup MSBuild for deployment build
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    # 3 Build solution again (or reuse artifact)
+    - name: Build for Deployment
+      run: msbuild EmployeeTracker.sln /p:Configuration=Release
+
+    # 4 Create Deployment Folder
+    - name: Prepare Deployment Files
+      run: |
+        echo "Preparing deployment package..."
+        mkdir Deploy
+        copy EmployeeTracker\bin\Release\*.exe Deploy\
+        echo "Files ready for deployment."
+
+    # 5 Upload deployable build as artifact
+    - name: Upload Deployment Artifact
+      uses: actions/upload-artifact@v3
       with:
-        dotnet-version: '8.0.x'
+        name: EmployeeTracker-Build
+        path: Deploy/
 
-    - name: Publish project
-      run: dotnet publish -c Release -o ./publish
-
-    - name: Deploy to Azure Web App
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: "EmployeeTaskPerformanceTracker"
-        slot-name: "production"
-        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-        package: ./publish
+    # 6 (Optional) Simulate or push to real environment
+    # Replace with actual deploy target later (e.g., Azure)
+    - name: Simulate Deployment
+      run: |
+        echo "✅ Deploying Employee Tracker build..."
+        echo "Deployment completed successfully!"
