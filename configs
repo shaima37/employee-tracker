@@ -1,1 +1,16 @@
+{
+  "AppSettings": {
+    "ApplicationName": "Employee Task & Performance Tracker",
+    "Version": "1.0.0",
+    "Environment": "Production",
+    "EnableLogging": true,
+    "DataStorage": "InMemory"
+  }
+  "TestConfiguration": {
+    "EnableIntegrationTests": true,
+    "TestDatabase": "InMemory",
+    "DefaultUserId": 1,
+    "RunParallelTests": false
+  }
 
+}
