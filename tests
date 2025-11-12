@@ -1,1 +1,75 @@
+// Unit Test
+using System;
+using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
+using EmployeeTracker;   // Reference your main namespace
+using System.Collections.Generic;
+using System.Linq;
+
+namespace EmployeeTrackerTests
+{
+    [TestClass]
+    public class ProgramTests
+    {
+        [TestMethod]
+        public void CreateTask_ShouldIncreaseTaskCount()
+        {
+            // Arrange
+            List<TaskItem> testTasks = new List<TaskItem>();
+            int initialCount = testTasks.Count;
+
+            // Act
+            testTasks.Add(new TaskItem { Id = 1, Title = "Report Writing", Description = "Prepare weekly report" });
+
+            // Assert
+            Assert.AreEqual(initialCount + 1, testTasks.Count, "Task count should increase by one after adding.");
+        }
+
+        [TestMethod]
+        public void AssignTask_ShouldAssignEmployeeSuccessfully()
+        {
+            // Arrange
+            User employee = new User(1, "Ali", UserRole.Employee);
+            TaskItem task = new TaskItem { Id = 1, Title = "Data Entry", Description = "Update HR records" };
+
+            // Act
+            task.AssigneeId = employee.Id;
+
+            // Assert
+            Assert.AreEqual(employee.Id, task.AssigneeId, "Task should be assigned to the correct employee.");
+        }
+
+        [TestMethod]
+        public void UpdateTaskStatus_ShouldChangeToCompleted()
+        {
+            // Arrange
+            TaskItem task = new TaskItem { Id = 1, Title = "Testing", Description = "Run test cases" };
+
+            // Act
+            task.Status = TaskStatus.Completed;
+
+            // Assert
+            Assert.AreEqual(TaskStatus.Completed, task.Status, "Task status should be updated to Completed.");
+        }
+
+        [TestMethod]
+        public void AddEvaluation_ShouldStoreEvaluationDataCorrectly()
+        {
+            // Arrange
+            User manager = new User(1, "Manager", UserRole.Manager);
+            User employee = new User(2, "Employee", UserRole.Employee);
+            PerformanceEvaluation eval = new PerformanceEvaluation
+            {
+                Id = 1,
+                EvaluatorId = manager.Id,
+                TargetUserId = employee.Id,
+                Rating = 4,
+                Comments = "Good performance"
+            };
+
+            // Act & Assert
+            Assert.AreEqual(4, eval.Rating, "Rating should be stored correctly.");
+            Assert.AreEqual("Good performance", eval.Comments, "Comments should match expected text.");
+        }
+    }
+}
 
